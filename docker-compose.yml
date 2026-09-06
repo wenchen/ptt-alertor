@@ -3,7 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: ptt-alertor:latest
+    image: wenchenx/ptt-alertor:latest
+    pull_policy: build
     container_name: ptt-alertor-app
     restart: always
     ports:
@@ -76,7 +77,7 @@ services:
     container_name: ptt-alertor-nginx
     restart: always
     ports:
-      - "${HTTP_PORT:-80}:80"
+      - "${HTTP_PORT:-8080}:80"
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - ./public:/usr/share/nginx/html:ro
