@@ -55,5 +55,6 @@ func (Redis) Delete(articleCode string) error {
 	if err != nil {
 		log.WithField("runtime", myutil.BasicRuntimeInfo()).WithError(err).Error()
 	}
+	_, _ = conn.Do("SREM", subsCodesKey, articleCode)
 	return err
 }

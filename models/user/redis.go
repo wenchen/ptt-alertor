@@ -21,12 +21,24 @@ const prefix string = "user:"
 func (Redis) List() (accounts []string) {
 	conn := connectRedis()
 	defer conn.Close()
-	userKeys, err := redis.Strings(conn.Do("KEYS", "user:*"))
-	if err != nil {
-		log.WithField("runtime", myutil.BasicRuntimeInfo()).WithError(err).Error()
-	}
-	for _, key := range userKeys {
-		accounts = append(accounts, strings.TrimPrefix(key, "user:"))
+	var cursor int64
+	for {
+		reply, err := redis.Values(conn.Do("SCAN", cursor, "MATCH", prefix+"*", "COUNT", 200))
+		if err != nil {
+			log.WithField("runtime", myutil.BasicRuntimeInfo()).WithError(err).Error()
+			break
+		}
+		if len(reply) < 2 {
+			break
+		}
+		cursor, _ = redis.Int64(reply[0], nil)
+		keys, _ := redis.Strings(reply[1], nil)
+		for _, key := range keys {
+			accounts = append(accounts, strings.TrimPrefix(key, prefix))
+		}
+		if cursor == 0 {
+			break
+		}
 	}
 	return accounts
 }

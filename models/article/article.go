@@ -18,6 +18,7 @@ import (
 
 const prefix = "article:"
 const subsSuffix = ":subs"
+const subsCodesKey = "article:subs:codes"
 
 type Article struct {
 	ID               int    `json:"ID,omitempty"`
@@ -110,6 +111,7 @@ func (a Article) Destroy() error {
 	if err != nil {
 		log.WithField("runtime", myutil.BasicRuntimeInfo()).WithError(err).Error()
 	}
+	_, _ = conn.Do("SREM", subsCodesKey, a.Code)
 	return err
 }
 
@@ -121,6 +123,7 @@ func (a Article) AddSubscriber(account string) error {
 	if err != nil {
 		log.WithField("runtime", myutil.BasicRuntimeInfo()).WithError(err).Error()
 	}
+	_, _ = conn.Do("SADD", subsCodesKey, a.Code)
 	return err
 }
 
@@ -142,6 +145,10 @@ func (a Article) RemoveSubscriber(sub string) error {
 	_, err := conn.Do("SREM", prefix+a.Code+subsSuffix, sub)
 	if err != nil {
 		log.WithField("runtime", myutil.BasicRuntimeInfo()).WithError(err).Error()
+	}
+	cnt, err := redis.Int(conn.Do("SCARD", prefix+a.Code+subsSuffix))
+	if err == nil && cnt == 0 {
+		_, _ = conn.Do("SREM", subsCodesKey, a.Code)
 	}
 	return err
 }

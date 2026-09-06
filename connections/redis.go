@@ -12,7 +12,9 @@ var pool = newPool()
 
 func newPool() *redis.Pool {
 	return &redis.Pool{
-		MaxIdle:     3,
+		MaxIdle:     10,
+		MaxActive:   100,
+		Wait:        true,
 		IdleTimeout: 300 * time.Second,
 		Dial: func() (redis.Conn, error) {
 			endpoint := os.Getenv("REDIS_ENDPOINT")

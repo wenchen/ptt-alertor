@@ -57,9 +57,21 @@ func (cc commentChecker) Run() {
 				return
 			default:
 				codes := new(article.Articles).List()
+				if len(codes) == 0 {
+					select {
+					case <-ctx.Done():
+						return
+					case <-time.After(1 * time.Second):
+						continue
+					}
+				}
 				for _, code := range codes {
-					time.Sleep(cc.duration)
-					go cc.checkComments(code, ach)
+					select {
+					case <-ctx.Done():
+						return
+					case <-time.After(cc.duration):
+						go cc.checkComments(code, ach)
+					}
 				}
 			}
 		}

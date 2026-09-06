@@ -89,7 +89,7 @@ func (c Checker) Run() {
 			case <-ctx.Done():
 				return
 			default:
-				checkBoards(highBoards, checkHighBoardDuration)
+				checkBoards(ctx, highBoards, checkHighBoardDuration)
 			}
 		}
 	}()
@@ -121,7 +121,7 @@ func (c Checker) Run() {
 					offPeak = op
 				}
 			default:
-				checkBoards(models.Board().All(), duration)
+				checkBoards(ctx, models.Board().All(), duration)
 			}
 		}
 	}()
@@ -172,10 +172,22 @@ func (c Checker) Stop() {
 	log.Info("Checker Stop")
 }
 
-func checkBoards(bds []*board.Board, duration time.Duration) {
+func checkBoards(ctx context.Context, bds []*board.Board, duration time.Duration) {
+	if len(bds) == 0 {
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(duration):
+			return
+		}
+	}
 	for _, bd := range bds {
-		time.Sleep(duration)
-		go checkNewArticle(bd, boardCh)
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(duration):
+			go checkNewArticle(bd, boardCh)
+		}
 	}
 }
 

@@ -156,7 +156,7 @@ func DelDiffList(account, board, kind string) error {
 	preKeyTemplate := prefix + account + ":" + board + ":" + kind + ":*"
 	conn := connections.Redis()
 	defer conn.Close()
-	preKeys, err := redis.Strings(conn.Do("KEYS", preKeyTemplate))
+	preKeys, err := scanKeys(conn, preKeyTemplate)
 	if len(preKeys) > 0 {
 		_, err = conn.Do("DEL", redis.Args{}.AddFlat(preKeys)...)
 	}
@@ -170,7 +170,7 @@ func ReplaceBenchKeys() error {
 	baseKeyTemplate := prefix + "*:*:*:base"
 	conn := connections.Redis()
 	defer conn.Close()
-	baseKeys, err := redis.Strings(conn.Do("KEYS", baseKeyTemplate))
+	baseKeys, err := scanKeys(conn, baseKeyTemplate)
 	for _, baseKey := range baseKeys {
 		key := strings.TrimSuffix(baseKey, "base") + "bench"
 		conn.Send("WATCH", key)
@@ -188,7 +188,7 @@ func RenameDiffListKeys(preBoard, postBoard string) error {
 	keyTemplate := prefix + "*:" + preBoard + ":*"
 	conn := connections.Redis()
 	defer conn.Close()
-	keys, err := redis.Strings(conn.Do("KEYS", keyTemplate))
+	keys, err := scanKeys(conn, keyTemplate)
 	for _, key := range keys {
 		if postBoard == "" {
 			_, err = conn.Do("DEL", key)
@@ -211,4 +211,25 @@ func RenameDiffListKeys(preBoard, postBoard string) error {
 		}
 	}
 	return err
+}
+
+func scanKeys(conn redis.Conn, pattern string) ([]string, error) {
+	var cursor int64
+	var allKeys []string
+	for {
+		reply, err := redis.Values(conn.Do("SCAN", cursor, "MATCH", pattern, "COUNT", 200))
+		if err != nil {
+			return allKeys, err
+		}
+		if len(reply) < 2 {
+			break
+		}
+		cursor, _ = redis.Int64(reply[0], nil)
+		keys, _ := redis.Strings(reply[1], nil)
+		allKeys = append(allKeys, keys...)
+		if cursor == 0 {
+			break
+		}
+	}
+	return allKeys, nil
 }

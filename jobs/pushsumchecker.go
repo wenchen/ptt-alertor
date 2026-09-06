@@ -75,10 +75,22 @@ func (psc pushSumChecker) Run() {
 				return
 			default:
 				boards := pushsum.List()
+				if len(boards) == 0 {
+					select {
+					case <-ctx.Done():
+						return
+					case <-time.After(1 * time.Second):
+						continue
+					}
+				}
 				for _, board := range boards {
 					ba := BoardArticles{board: board}
-					time.Sleep(psc.duration)
-					go psc.crawlArticles(ba, baCh)
+					select {
+					case <-ctx.Done():
+						return
+					case <-time.After(psc.duration):
+						go psc.crawlArticles(ba, baCh)
+					}
 				}
 			}
 		}
