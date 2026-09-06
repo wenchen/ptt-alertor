@@ -1,0 +1,88 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ptt-alertor:latest
+    container_name: ptt-alertor-app
+    restart: always
+    ports:
+      - "9090:9090"
+      - "6060:6060"
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DBNAME: ${POSTGRES_DB:-${POSTGRES_DBNAME:-ptt_alertor}}
+      POSTGRES_SSLMODE: ${POSTGRES_SSLMODE:-disable}
+      REDIS_ENDPOINT: redis
+      REDIS_PORT: 6379
+      APP_HOST: ${APP_HOST:-http://localhost}
+      APP_WS_HOST: ${APP_WS_HOST:-ws://localhost}
+      AUTH_USER: ${AUTH_USER:-admin}
+      AUTH_PW: ${AUTH_PW:-password}
+      BOARD_HIGH: ${BOARD_HIGH:-gossiping,stock}
+      TELEGRAM_TOKEN: ${TELEGRAM_TOKEN:-}
+      MESSENGER_ACCESSTOKEN: ${MESSENGER_ACCESSTOKEN:-}
+      MESSENGER_VERIFYTOKEN: ${MESSENGER_VERIFYTOKEN:-}
+      MAILGUN_DOMAIN: ${MAILGUN_DOMAIN:-}
+      MAILGUN_APIKEY: ${MAILGUN_APIKEY:-}
+      MAILGUN_PUBLIC_APIKEY: ${MAILGUN_PUBLIC_APIKEY:-}
+    env_file:
+      - path: .env
+        required: false
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: ptt-alertor-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-${POSTGRES_DBNAME:-ptt_alertor}}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./scripts/init_postgres.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-${POSTGRES_DBNAME:-ptt_alertor}}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:alpine
+    container_name: ptt-alertor-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  nginx:
+    image: nginx:alpine
+    container_name: ptt-alertor-nginx
+    restart: always
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./public:/usr/share/nginx/html:ro
+    depends_on:
+      - app
+
+volumes:
+  pgdata:
+  redisdata:

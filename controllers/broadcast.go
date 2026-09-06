@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 
 	log "github.com/Ptt-Alertor/logrus"
-	"github.com/Ptt-Alertor/ptt-alertor/jobs"
+	"github.com/wenchen/ptt-alertor/jobs"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -19,7 +19,7 @@ func Broadcast(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	body := requestBody{}
 	err := json.NewDecoder(r.Body).Decode(&body)
 	if err != nil {
-		log.WithError(err).Error("Decode Notify Body Failed")
+		log.WithError(err).Error("Decode Broadcast Body Failed")
 	}
 	bc := new(jobs.Broadcaster)
 	bc.Msg = body.Content

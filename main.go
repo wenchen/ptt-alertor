@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	log "github.com/Ptt-Alertor/logrus"
@@ -12,11 +13,11 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/robfig/cron"
 
-	"github.com/Ptt-Alertor/ptt-alertor/channels/line"
-	"github.com/Ptt-Alertor/ptt-alertor/channels/messenger"
-	"github.com/Ptt-Alertor/ptt-alertor/channels/telegram"
-	ctrlr "github.com/Ptt-Alertor/ptt-alertor/controllers"
-	"github.com/Ptt-Alertor/ptt-alertor/jobs"
+	"github.com/wenchen/ptt-alertor/channels/messenger"
+	"github.com/wenchen/ptt-alertor/channels/telegram"
+	"github.com/wenchen/ptt-alertor/connections"
+	ctrlr "github.com/wenchen/ptt-alertor/controllers"
+	"github.com/wenchen/ptt-alertor/jobs"
 )
 
 var (
@@ -59,15 +60,19 @@ func basicAuth(handle httprouter.Handle) httprouter.Handle {
 }
 
 func main() {
+	if err := connections.AutoMigrate(connections.Postgres()); err != nil {
+		log.WithError(err).Warn("Postgres AutoMigrate warning (tables may need manual setup)")
+	}
+
 	log.Info("Start Jobs")
 	startJobs()
+
 
 	router := newRouter()
 	m := messenger.New()
 
 	router.GET("/", ctrlr.Index)
 	router.GET("/messenger", ctrlr.MessengerIndex)
-	router.GET("/line", ctrlr.LineIndex)
 	router.GET("/telegram", ctrlr.TelegramIndex)
 	router.GET("/redirect/:checksum", ctrlr.Redirect)
 	router.GET("/top", ctrlr.Top)
@@ -101,16 +106,14 @@ func main() {
 	router.POST("/users", basicAuth(ctrlr.UserCreate))
 	router.PUT("/users/:account", basicAuth(ctrlr.UserModify))
 
-	// line
-	router.POST("/line/callback", line.HandleRequest)
-	router.POST("/line/notify/callback", line.CatchCallback)
-
 	// facebook messenger
 	router.GET("/messenger/webhook", m.Verify)
 	router.POST("/messenger/webhook", m.Received)
 
 	// telegram
-	router.POST("/telegram/"+telegramToken, telegram.HandleRequest)
+	if telegramToken != "" {
+		router.POST("/telegram/"+telegramToken, telegram.HandleRequest)
+	}
 
 	// gops agent
 	if err := agent.Listen(agent.Options{Addr: ":6060", ShutdownCleanup: true}); err != nil {
@@ -130,8 +133,8 @@ func main() {
 	}()
 
 	// graceful shutdown
-	quit := make(chan os.Signal)
-	signal.Notify(quit, os.Interrupt)
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 	<-quit
 	log.Info("Shutdown Web Server...")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

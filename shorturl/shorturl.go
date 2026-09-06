@@ -3,7 +3,6 @@ package shorturl
 import (
 	"crypto/md5"
 	"fmt"
-	"os"
 	"time"
 
 	log "github.com/Ptt-Alertor/logrus"
@@ -11,13 +10,13 @@ import (
 
 	"strconv"
 
-	"github.com/Ptt-Alertor/ptt-alertor/connections"
-	"github.com/Ptt-Alertor/ptt-alertor/myutil"
+	"github.com/wenchen/ptt-alertor/connections"
+	"github.com/wenchen/ptt-alertor/myutil"
 )
 
 const redisPrefix = "sum:"
 
-var url = os.Getenv("APP_HOST") + "/redirect/"
+var url = myutil.AppHost() + "/redirect/"
 
 func Gen(longURL string) string {
 	data := []byte(longURL)
@@ -29,7 +28,7 @@ func Gen(longURL string) string {
 	if err != nil {
 		log.WithField("runtime", myutil.BasicRuntimeInfo()).WithError(err).Error()
 	}
-	shortURL := url + sum
+	shortURL := myutil.AppHost() + "/redirect/" + sum
 	return shortURL
 }
 

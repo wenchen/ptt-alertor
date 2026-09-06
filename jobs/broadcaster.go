@@ -3,13 +3,12 @@ package jobs
 import (
 	"errors"
 
-	"github.com/Ptt-Alertor/ptt-alertor/models"
-	"github.com/Ptt-Alertor/ptt-alertor/models/user"
+	"github.com/wenchen/ptt-alertor/models"
+	"github.com/wenchen/ptt-alertor/models/user"
 )
 
 var platforms = map[string]bool{
 	"email":     true,
-	"line":      true,
 	"messenger": true,
 	"telegram":  true,
 }
@@ -34,9 +33,6 @@ func (bc Broadcaster) Send(plfms []string) error {
 
 	for _, u := range models.User().All() {
 		bc.subType = "broadcast"
-		if platformBl["line"] {
-			go bc.sendLine(u)
-		}
 		if platformBl["messenger"] {
 			go bc.sendMessenger(u)
 		}
@@ -52,12 +48,6 @@ func (bc Broadcaster) Send(plfms []string) error {
 
 func (bc Broadcaster) sendEmail(u *user.User) {
 	bc.Profile.Email = u.Profile.Email
-	ckCh <- bc
-}
-
-func (bc Broadcaster) sendLine(u *user.User) {
-	bc.Profile.Line = u.Profile.Line
-	bc.Profile.LineAccessToken = u.Profile.LineAccessToken
 	ckCh <- bc
 }
 

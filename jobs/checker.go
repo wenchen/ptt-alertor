@@ -10,12 +10,12 @@ import (
 
 	log "github.com/Ptt-Alertor/logrus"
 
-	"github.com/Ptt-Alertor/ptt-alertor/models"
-	"github.com/Ptt-Alertor/ptt-alertor/models/article"
-	"github.com/Ptt-Alertor/ptt-alertor/models/author"
-	"github.com/Ptt-Alertor/ptt-alertor/models/board"
-	"github.com/Ptt-Alertor/ptt-alertor/models/keyword"
-	"github.com/Ptt-Alertor/ptt-alertor/models/user"
+	"github.com/wenchen/ptt-alertor/models"
+	"github.com/wenchen/ptt-alertor/models/article"
+	"github.com/wenchen/ptt-alertor/models/author"
+	"github.com/wenchen/ptt-alertor/models/board"
+	"github.com/wenchen/ptt-alertor/models/keyword"
+	"github.com/wenchen/ptt-alertor/models/user"
 )
 
 const checkHighBoardDuration = 1 * time.Second
@@ -26,8 +26,12 @@ var highBoardNames = strings.Split(os.Getenv("BOARD_HIGH"), ",")
 
 func init() {
 	for _, name := range highBoardNames {
+		trimmed := strings.TrimSpace(name)
+		if trimmed == "" {
+			continue
+		}
 		bd := models.Board()
-		bd.Name = name
+		bd.Name = trimmed
 		highBoards = append(highBoards, bd)
 	}
 }

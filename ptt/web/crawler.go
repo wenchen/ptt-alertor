@@ -8,8 +8,8 @@ import (
 
 	log "github.com/Ptt-Alertor/logrus"
 
-	"github.com/Ptt-Alertor/ptt-alertor/models/article"
-	pttHttp "github.com/Ptt-Alertor/ptt-alertor/ptt/http"
+	"github.com/wenchen/ptt-alertor/models/article"
+	pttHttp "github.com/wenchen/ptt-alertor/ptt/http"
 
 	"regexp"
 
@@ -17,7 +17,7 @@ import (
 
 	"strconv"
 
-	"github.com/Ptt-Alertor/ptt-alertor/models/pushsum"
+	"github.com/wenchen/ptt-alertor/models/pushsum"
 	"golang.org/x/net/html"
 )
 

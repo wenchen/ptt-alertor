@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Ptt-Alertor/ptt-alertor/models/article"
-	pttHttp "github.com/Ptt-Alertor/ptt-alertor/ptt/http"
+	"github.com/wenchen/ptt-alertor/models/article"
+	pttHttp "github.com/wenchen/ptt-alertor/ptt/http"
 	"github.com/mmcdole/gofeed"
 )
 

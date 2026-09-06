@@ -9,7 +9,8 @@
     <script src="https://cdn.jsdelivr.net/countupjs/1.8.5/countUp.min.js"></script>
     <script>
         $(function () {
-            var url = "{{.WSHost}}/ws";
+            var wsHost = "{{.WSHost}}";
+            var url = wsHost ? ((wsHost.indexOf("ws://") === 0 || wsHost.indexOf("wss://") === 0) ? wsHost + "/ws" : (location.protocol === "https:" ? "wss://" : "ws://") + wsHost + "/ws") : (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws";
             var ws = new WebSocket(url);
             var counterUps = [];
             var spans = document.getElementById("counter").querySelectorAll(".label");

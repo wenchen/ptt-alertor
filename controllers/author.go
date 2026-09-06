@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"sort"
 
-	"github.com/Ptt-Alertor/ptt-alertor/models"
-	"github.com/Ptt-Alertor/ptt-alertor/models/author"
+	"github.com/wenchen/ptt-alertor/models"
+	"github.com/wenchen/ptt-alertor/models/author"
 	"github.com/julienschmidt/httprouter"
 )
 

@@ -4,7 +4,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/Ptt-Alertor/ptt-alertor/models/board"
+	"github.com/wenchen/ptt-alertor/models/board"
 )
 
 type Subscriptions []Subscription

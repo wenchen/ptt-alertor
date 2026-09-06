@@ -3,11 +3,10 @@ package jobs
 import (
 	log "github.com/Ptt-Alertor/logrus"
 
-	"github.com/Ptt-Alertor/ptt-alertor/channels/line"
-	"github.com/Ptt-Alertor/ptt-alertor/channels/mail"
-	"github.com/Ptt-Alertor/ptt-alertor/channels/messenger"
-	"github.com/Ptt-Alertor/ptt-alertor/channels/telegram"
-	"github.com/Ptt-Alertor/ptt-alertor/models/counter"
+	"github.com/wenchen/ptt-alertor/channels/mail"
+	"github.com/wenchen/ptt-alertor/channels/messenger"
+	"github.com/wenchen/ptt-alertor/channels/telegram"
+	"github.com/wenchen/ptt-alertor/models/counter"
 )
 
 const workers = 300
@@ -38,24 +37,9 @@ func sendMessage(c check) {
 	cr := c.Self()
 	account := cr.Profile.Account
 	var platform string
-	if cr.Profile.Line != "" && cr.Profile.LineAccessToken == "" {
-		platform = "line"
-		log.WithFields(log.Fields{
-			"account":  account,
-			"platform": platform,
-			"board":    cr.board,
-			"type":     cr.subType,
-			"word":     cr.word,
-		}).Warn("Message Sent without LINE Notify Connection")
-		return
-	}
 	if cr.Profile.Email != "" {
 		platform = "mail"
 		sendMail(c)
-	}
-	if cr.Profile.LineAccessToken != "" {
-		platform = "line"
-		sendLineNotify(c)
 	}
 	if cr.Profile.Messenger != "" {
 		platform = "messenger"
@@ -83,16 +67,6 @@ func sendMail(c check) {
 	m.Body.Articles = cr.articles
 	m.Receiver = cr.Profile.Email
 	m.Send()
-}
-
-func sendLine(c check) {
-	cr := c.Self()
-	line.PushTextMessage(cr.Profile.Line, c.String())
-}
-
-func sendLineNotify(c check) {
-	cr := c.Self()
-	line.Notify(cr.Profile.LineAccessToken, c.String())
 }
 
 func sendMessenger(c check) {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Ptt-Alertor/ptt-alertor/models/article"
+	"github.com/wenchen/ptt-alertor/models/article"
 	"github.com/julienschmidt/httprouter"
 )
 

@@ -7,8 +7,8 @@ import (
 
 	"time"
 
-	"github.com/Ptt-Alertor/ptt-alertor/models"
-	"github.com/Ptt-Alertor/ptt-alertor/models/board"
+	"github.com/wenchen/ptt-alertor/models"
+	"github.com/wenchen/ptt-alertor/models/board"
 )
 
 type Fetcher struct {

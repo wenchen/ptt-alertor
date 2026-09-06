@@ -6,9 +6,9 @@ import (
 	log "github.com/Ptt-Alertor/logrus"
 	"github.com/garyburd/redigo/redis"
 
-	"github.com/Ptt-Alertor/ptt-alertor/connections"
-	"github.com/Ptt-Alertor/ptt-alertor/models/article"
-	"github.com/Ptt-Alertor/ptt-alertor/myutil"
+	"github.com/wenchen/ptt-alertor/connections"
+	"github.com/wenchen/ptt-alertor/models/article"
+	"github.com/wenchen/ptt-alertor/myutil"
 )
 
 const prefix string = "board:"

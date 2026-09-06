@@ -3,8 +3,8 @@ package keyword
 import (
 	log "github.com/Ptt-Alertor/logrus"
 
-	"github.com/Ptt-Alertor/ptt-alertor/connections"
-	"github.com/Ptt-Alertor/ptt-alertor/myutil"
+	"github.com/wenchen/ptt-alertor/connections"
+	"github.com/wenchen/ptt-alertor/myutil"
 	"github.com/garyburd/redigo/redis"
 )
 

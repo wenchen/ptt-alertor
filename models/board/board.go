@@ -5,10 +5,10 @@ import (
 	"strings"
 
 	log "github.com/Ptt-Alertor/logrus"
-	"github.com/Ptt-Alertor/ptt-alertor/models/article"
-	"github.com/Ptt-Alertor/ptt-alertor/myutil/maputil"
-	"github.com/Ptt-Alertor/ptt-alertor/ptt/rss"
-	"github.com/Ptt-Alertor/ptt-alertor/ptt/web"
+	"github.com/wenchen/ptt-alertor/models/article"
+	"github.com/wenchen/ptt-alertor/myutil/maputil"
+	"github.com/wenchen/ptt-alertor/ptt/rss"
+	"github.com/wenchen/ptt-alertor/ptt/web"
 )
 
 type BoardNotExistError struct {
@@ -163,7 +163,7 @@ func (bd Board) SuggestBoardName() string {
 }
 
 func CheckBoardExist(boardName string) (bool, string) {
-	bd := NewBoard(new(DynamoDB), new(Redis))
+	bd := NewBoard(new(Postgres), new(Redis))
 	bd.Name = boardName
 	if bd.Exist() {
 		return true, ""

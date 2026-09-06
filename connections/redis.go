@@ -15,11 +15,25 @@ func newPool() *redis.Pool {
 		MaxIdle:     3,
 		IdleTimeout: 300 * time.Second,
 		Dial: func() (redis.Conn, error) {
-			conn, err := redis.Dial("tcp", os.Getenv("REDIS_ENDPOINT")+":"+os.Getenv("REDIS_PORT"))
-			if err != nil {
-				log.Fatal(err)
+			endpoint := os.Getenv("REDIS_ENDPOINT")
+			if endpoint == "" {
+				endpoint = "localhost"
 			}
-			return conn, err
+			port := os.Getenv("REDIS_PORT")
+			if port == "" {
+				port = "6379"
+			}
+			var conn redis.Conn
+			var err error
+			for i := 0; i < 5; i++ {
+				conn, err = redis.Dial("tcp", endpoint+":"+port)
+				if err == nil {
+					return conn, nil
+				}
+				time.Sleep(1 * time.Second)
+			}
+			log.WithError(err).Fatal("Failed to connect to Redis")
+			return nil, err
 		},
 	}
 }

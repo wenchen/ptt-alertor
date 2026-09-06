@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/Ptt-Alertor/ptt-alertor/models/subscription"
+	"github.com/wenchen/ptt-alertor/models/subscription"
 )
 
 type User struct {
@@ -17,14 +17,12 @@ type User struct {
 }
 
 type Profile struct {
-	Account         string `json:"account"`
-	Type            string `json:"type,omitempty"`
-	Email           string `json:"email"`
-	Line            string `json:"line"`
-	LineAccessToken string `json:"lineAccessToken"`
-	Messenger       string `json:"messenger"`
-	Telegram        string `json:"telegram"`
-	TelegramChat    int64  `json:"telegramChat"`
+	Account      string `json:"account"`
+	Type         string `json:"type,omitempty"`
+	Email        string `json:"email"`
+	Messenger    string `json:"messenger"`
+	Telegram     string `json:"telegram"`
+	TelegramChat int64  `json:"telegramChat"`
 }
 
 type Driver interface {
@@ -62,8 +60,8 @@ func (u User) Save() error {
 		return ErrAccountEmpty
 	}
 
-	if u.Profile.Email == "" && u.Profile.Line == "" && u.Profile.Messenger == "" && u.Profile.Telegram == "" {
-		return errors.New("one of Email, Line, Messenger and Telegram have to be filled")
+	if u.Profile.Email == "" && u.Profile.Messenger == "" && u.Profile.Telegram == "" {
+		return errors.New("one of Email, Messenger and Telegram have to be filled")
 	}
 	u.CreateTime = time.Now()
 	u.UpdateTime = time.Now()

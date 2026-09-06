@@ -8,22 +8,22 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Ptt-Alertor/ptt-alertor/models"
-	"github.com/Ptt-Alertor/ptt-alertor/myutil"
-	"github.com/Ptt-Alertor/ptt-alertor/ptt/web"
+	"github.com/wenchen/ptt-alertor/models"
+	"github.com/wenchen/ptt-alertor/myutil"
+	"github.com/wenchen/ptt-alertor/ptt/web"
 
 	"fmt"
 
 	log "github.com/Ptt-Alertor/logrus"
-	"github.com/Ptt-Alertor/ptt-alertor/models/article"
-	"github.com/Ptt-Alertor/ptt-alertor/models/board"
-	"github.com/Ptt-Alertor/ptt-alertor/models/subscription"
-	"github.com/Ptt-Alertor/ptt-alertor/models/top"
-	"github.com/Ptt-Alertor/ptt-alertor/models/user"
+	"github.com/wenchen/ptt-alertor/models/article"
+	"github.com/wenchen/ptt-alertor/models/board"
+	"github.com/wenchen/ptt-alertor/models/subscription"
+	"github.com/wenchen/ptt-alertor/models/top"
+	"github.com/wenchen/ptt-alertor/models/user"
 )
 
 const subArticlesLimit int = 50
-const updateFailedMsg string = "失敗，請嘗試封鎖再解封鎖，並重新執行註冊步驟。\n若問題未解決，請至粉絲團或 LINE 首頁留言。"
+const updateFailedMsg string = "失敗，請嘗試封鎖再解封鎖，並重新執行註冊步驟。\n若問題未解決，請至粉絲團留言。"
 
 var inputErrorTips = []string{
 	"指令格式錯誤。",
@@ -60,7 +60,7 @@ var Commands = map[string]map[string]string{
 		"範例":      "新增推文 https://www.ptt.cc/bbs/EZsoft/M.1497363598.A.74E.html",
 	},
 	"進階應用": {
-		"參考連結": "https://pttalertor.dinolai.com/docs",
+		"參考連結": myutil.AppHost() + "/docs",
 	},
 }
 
@@ -287,7 +287,7 @@ func cleanCommentList(account string) string {
 			article.Code = code
 			bl, err := article.Exist()
 			if err != nil {
-				return "清理推文失敗，請洽至粉絲團或 LINE 首頁留言。"
+				return "清理推文失敗，請洽至粉絲團留言。"
 			}
 			if !bl {
 				update(removeArticles, account, []string{sub.Board}, code)
@@ -335,8 +335,13 @@ func listTop() string {
 	for i, pushSum := range top.ListPushSum(5) {
 		content += fmt.Sprintf("\n%d. %s", i+1, pushSum)
 	}
-	content += "\n\nTOP 100:\nhttp://pttalertor.dinolai.com/top"
+	content += "\n\nTOP 100:\n" + myutil.AppHost() + "/top"
 	return content
+}
+
+// UpdateDocURL updates the reference link in Commands using the current AppHost.
+func UpdateDocURL() {
+	Commands["進階應用"]["參考連結"] = myutil.AppHost() + "/docs"
 }
 
 func handleKeyword(command, userID, board, keywordStr string) (string, error) {
@@ -542,17 +547,6 @@ func update(action updateAction, account string, boardNames []string, inputs ...
 	return nil
 }
 
-func HandleLineFollow(id, accountType string) error {
-	u := models.User().Find(id)
-	u.Profile.Line, u.Profile.Type = id, accountType
-	log.WithFields(log.Fields{
-		"id":       id,
-		"type":     accountType,
-		"platform": "line",
-	}).Info("User Join")
-	return handleFollow(u)
-}
-
 func HandleMessengerFollow(id string) error {
 	u := models.User().Find(id)
 	u.Profile.Messenger = id
@@ -581,9 +575,6 @@ func handleFollow(u user.User) error {
 	} else {
 		if u.Profile.Messenger != "" {
 			u.Profile.Account = u.Profile.Messenger
-		}
-		if u.Profile.Line != "" {
-			u.Profile.Account = u.Profile.Line
 		}
 		if u.Profile.Telegram != "" {
 			u.Profile.Account = u.Profile.Telegram

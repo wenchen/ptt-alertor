@@ -8,15 +8,12 @@ Ptt Alertor
 
 ## 軟體資訊：
 
-LINE Bot, LINE Notify, Facebook Messenger Bot
+Facebook Messenger Bot, Telegram Bot
 
 ## 軟體功能：
 
 新增看板及作者或關鍵字，即時通知最新文章。
 可一次新增多看板多關鍵字或多作者，目前設定為 10 秒通知一次。
-
-Line Demo:
-https://media.giphy.com/media/l0Iy28oboQbSw6Cn6/giphy.gif
 
 Messenger Demo:
 https://media.giphy.com/media/NVW8loI65D0I9Numxu/giphy.gif
@@ -152,8 +149,6 @@ https://media.giphy.com/media/l0IymluZkRkSDPDZ6/giphy.gif
 
 Messenger: http://m.me/pttalertor
 
-LINE: https://line.me/R/ti/p/%40vxl5146r
-
 ## 官方網站：
 
 http://pttalertor.dinolai.com
@@ -174,24 +169,18 @@ http://facebook.com/pttalertor
 
 ## 常見問題：
 
--   為什麼要分成 LINE Bot 和 LINE Notify，不能合在一起嗎？
-
-    因為若要使用 LINE Bot 內建的推播功能的話，要付一筆不小的月租費。
-
-    LINE Notify 是免費的推播服務，嘗試看看行得通就將兩個結合在一起了。
-
 -   加入後沒反應或是發現沒被通知了，怎麼辦？
 
-    可以嘗試封鎖 Ptt Alertor 再解封鎖，並按照指示重新與 LINE Notify 連動，應可解決問題。
+    可以嘗試封鎖 Ptt Alertor 再解封鎖，應可解決問題。
 
--   會取得使用者 Facebook or LINE 個人資料嗎？
+-   會取得使用者 Facebook 個人資料嗎？
 
-    系統只會存 Facebook or LINE 回傳給我的專屬於此 Bot 的 id，用來發送訊息。
+    系統只會存 Facebook 回傳給我的專屬於此 Bot 的 id，用來發送訊息。
 
-    此 id 也無法直接連至你的 Facebook or LINE 頁面，請不用擔心資料問題。
+    此 id 也無法直接連至你的 Facebook 頁面，請不用擔心資料問題。
 
 -   若不想再收到通知怎麼做？
     1. 可以刪除所有追蹤清單
-    1. 封鎖 Ptt Alertor 帳號。LINE Notify 也將取消推播。
+    1. 封鎖 Ptt Alertor 帳號。
 
-若有問題與建議麻煩推文、粉絲團或 LINE 首頁留言，希望大家使用愉快，謝謝。
+若有問題與建議麻煩推文或粉絲團留言，希望大家使用愉快，謝謝。

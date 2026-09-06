@@ -10,17 +10,17 @@
     <meta name="author" content="Dino Lai, Liam Lai">
     <meta name="google-site-verification" content="oj4eRvcsK1aK3rqqBxn6piDte5-2sG9neQqcAnd8gTo" />
     <!-- Facebook Open Graph -->
-    <meta property="og:url" content="https://pttalertor.dinolai.com/{{.URI}}" />
+    <meta property="og:url" content="{{.Host}}/{{.URI}}" />
     <meta property="og:type" content="product" />
     <meta property="og:title" content="Ptt Alertor - Ptt 即時文章通知，追蹤看板推文數、作者、關鍵字" />
     <meta property="og:description" content="訂閱看板推文數作者關鍵字，即時通知 Ptt 最新文章" />
-    <meta property="og:image" content="https://{{.S3Domain}}/assets/alarmP.png" />
+    <meta property="og:image" content="/assets/alarmP.png" />
 
-    <link rel="icon" type="image/png" href="https://{{.S3Domain}}/assets/alarmP32x32.png">
-    <link rel="apple-touch-icon" type="image/png" href="https://{{.S3Domain}}/assets/alarmP.png">
-    <meta name="msapplication-TileImage" content="https://{{.S3Domain}}/assets/alarmP.png">
+    <link rel="icon" type="image/png" href="/assets/alarmP32x32.png">
+    <link rel="apple-touch-icon" type="image/png" href="/assets/alarmP.png">
+    <meta name="msapplication-TileImage" content="/assets/alarmP.png">
     <meta name="msapplication-TileColor" content="#FFFFFF"/>
-    <link rel="alternate" href="https://pttalertor.dinolai.com/{{.URI}}" hreflang="zh-hant" />
+    <link rel="alternate" href="{{.Host}}/{{.URI}}" hreflang="zh-hant" />
 
     <!-- Bootstrap -->
     <!-- Latest compiled and minified CSS -->
@@ -35,8 +35,7 @@
       <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
       <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
-    <link rel="stylesheet" href="assets/css/index.css">
-    <script src="assets/js/google-analytics.js"></script>
+    <link rel="stylesheet" href="/assets/css/index.css">
 
 </head>
 {{end}}

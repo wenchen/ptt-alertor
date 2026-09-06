@@ -10,8 +10,8 @@ import (
 	"encoding/json"
 
 	log "github.com/Ptt-Alertor/logrus"
-	"github.com/Ptt-Alertor/ptt-alertor/command"
-	"github.com/Ptt-Alertor/ptt-alertor/myutil"
+	"github.com/wenchen/ptt-alertor/command"
+	"github.com/wenchen/ptt-alertor/myutil"
 	"github.com/julienschmidt/httprouter"
 )
 

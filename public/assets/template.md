@@ -4,15 +4,9 @@
 
 下載連結：
 
-LINE Bot: https://line.me/R/ti/p/%40vxl5146r
-
 Messenger Bot: https://m.me/pttalertor
 
-Telegram Bot: https://t.me/PttAlertorBot
-
-Demo：
-
-https://media.giphy.com/media/l0Iy28oboQbSw6Cn6/giphy.gif
+Telegram Bot: https://t.me/LetsHackPTTAlertorBot
 
 相關網站：
 

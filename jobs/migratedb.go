@@ -4,9 +4,9 @@ import (
 	"time"
 
 	log "github.com/Ptt-Alertor/logrus"
-	"github.com/Ptt-Alertor/ptt-alertor/models"
-	"github.com/Ptt-Alertor/ptt-alertor/models/article"
-	"github.com/Ptt-Alertor/ptt-alertor/models/board"
+	"github.com/wenchen/ptt-alertor/models"
+	"github.com/wenchen/ptt-alertor/models/article"
+	"github.com/wenchen/ptt-alertor/models/board"
 )
 
 var redisArticle = article.NewArticle(new(article.Redis))
@@ -35,11 +35,11 @@ func (m migrateDB) migrateBoards() {
 func (migrateDB) migrateBoard(boardName string) {
 	redisBoard.Name = boardName
 
-	dynamoBoard := models.Board()
-	dynamoBoard.Name = boardName
-	dynamoBoard.Articles = redisBoard.GetArticles()
+	targetBoard := models.Board()
+	targetBoard.Name = boardName
+	targetBoard.Articles = redisBoard.GetArticles()
 
-	if err := dynamoBoard.Save(); err != nil {
+	if err := targetBoard.Save(); err != nil {
 		log.WithField("board", boardName).Error("Migrate Board Failed")
 	}
 }
@@ -54,21 +54,22 @@ func (m migrateDB) migrateArticles() {
 }
 
 func (migrateDB) migrateArticle(code string) {
-	dynamoArticle := models.Article()
+	targetArticle := models.Article()
 	a := redisArticle.Find(code)
 
-	dynamoArticle.ID = a.ID
-	dynamoArticle.Code = a.Code
-	dynamoArticle.Title = a.Title
-	dynamoArticle.Link = a.Link
-	dynamoArticle.Date = a.Date
-	dynamoArticle.Author = a.Author
-	dynamoArticle.Comments = a.Comments
-	dynamoArticle.LastPushDateTime = a.LastPushDateTime
-	dynamoArticle.Board = a.Board
-	dynamoArticle.PushSum = a.PushSum
+	targetArticle.ID = a.ID
+	targetArticle.Code = a.Code
+	targetArticle.Title = a.Title
+	targetArticle.Link = a.Link
+	targetArticle.Date = a.Date
+	targetArticle.Author = a.Author
+	targetArticle.Comments = a.Comments
+	targetArticle.LastPushDateTime = a.LastPushDateTime
+	targetArticle.Board = a.Board
+	targetArticle.PushSum = a.PushSum
 
-	if err := dynamoArticle.Save(); err != nil {
+	if err := targetArticle.Save(); err != nil {
 		log.WithField("code", code).Error("Migrate Article Failed")
 	}
 }
+

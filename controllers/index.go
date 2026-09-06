@@ -8,10 +8,11 @@ import (
 
 	"strings"
 
-	"github.com/Ptt-Alertor/ptt-alertor/connections"
-	"github.com/Ptt-Alertor/ptt-alertor/models/counter"
-	"github.com/Ptt-Alertor/ptt-alertor/models/top"
-	"github.com/Ptt-Alertor/ptt-alertor/shorturl"
+	"github.com/wenchen/ptt-alertor/connections"
+	"github.com/wenchen/ptt-alertor/models/counter"
+	"github.com/wenchen/ptt-alertor/models/top"
+	"github.com/wenchen/ptt-alertor/myutil"
+	"github.com/wenchen/ptt-alertor/shorturl"
 	"github.com/garyburd/redigo/redis"
 	"github.com/julienschmidt/httprouter"
 	"golang.org/x/net/websocket"
@@ -22,7 +23,6 @@ var tpls = []string{
 	"public/top.html",
 	"public/telegram.html",
 	"public/messenger.html",
-	"public/line.html",
 	"public/tpls/head.tpl",
 	"public/tpls/header.tpl",
 	"public/tpls/slogan.tpl",
@@ -32,38 +32,38 @@ var tpls = []string{
 	"public/tpls/script.tpl",
 }
 
+func parseTemplates() *template.Template {
+	prefix := ""
+	if _, err := os.Stat("public"); os.IsNotExist(err) {
+		if _, err := os.Stat("../public"); err == nil {
+			prefix = "../"
+		}
+	}
+	files := make([]string, len(tpls))
+	for i, f := range tpls {
+		files[i] = prefix + f
+	}
+	return template.Must(template.ParseFiles(files...))
+}
+
 var (
-	templates = template.Must(template.ParseFiles(tpls...))
+	templates = parseTemplates()
 	wsHost    = os.Getenv("APP_WS_HOST")
-	s3Domain  = os.Getenv("S3_DOMAIN")
 )
 
 // Index Handles router "/" request
 func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	LineIndex(w, r, nil)
-}
-
-// LineIndex Handles router "/line" request
-func LineIndex(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	err := templates.ExecuteTemplate(w, "line.html", struct {
-		URI      string
-		WSHost   string
-		Count    []string
-		S3Domain string
-	}{"line", wsHost, count(), s3Domain})
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	TelegramIndex(w, r, nil)
 }
 
 // MessengerIndex Handles router "/messenger" request
 func MessengerIndex(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	err := templates.ExecuteTemplate(w, "messenger.html", struct {
-		URI      string
-		WSHost   string
-		Count    []string
-		S3Domain string
-	}{"messenger", wsHost, count(), s3Domain})
+		URI    string
+		Host   string
+		WSHost string
+		Count  []string
+	}{"messenger", myutil.AppHost(), wsHost, count()})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -72,11 +72,11 @@ func MessengerIndex(w http.ResponseWriter, r *http.Request, _ httprouter.Params)
 // TelegramIndex Handles router "/telegram" request
 func TelegramIndex(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	err := templates.ExecuteTemplate(w, "telegram.html", struct {
-		URI      string
-		WSHost   string
-		Count    []string
-		S3Domain string
-	}{"telegram", wsHost, count(), s3Domain})
+		URI    string
+		Host   string
+		WSHost string
+		Count  []string
+	}{"telegram", myutil.AppHost(), wsHost, count()})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -105,16 +105,16 @@ func Top(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	pushsum := top.ListPushSumWithScore(count)
 	data := struct {
 		URI      string
+		Host     string
 		Keywords top.WordOrders
 		Authors  top.WordOrders
 		PushSum  top.WordOrders
-		S3Domain string
 	}{
 		"top",
+		myutil.AppHost(),
 		keywords,
 		authors,
 		pushsum,
-		s3Domain,
 	}
 	err := templates.ExecuteTemplate(w, "top.html", data)
 	if err != nil {
@@ -125,11 +125,11 @@ func Top(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 // Docs shows advanced intructions
 func Docs(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	err := templates.ExecuteTemplate(w, "docs.html", struct {
-		URI      string
-		S3Domain string
+		URI  string
+		Host string
 	}{
 		"docs",
-		s3Domain,
+		myutil.AppHost(),
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -1,9 +1,22 @@
-# comment
-   .*
-   Dockerfile*
-   docker_golang_1.8/*
-   LICENSE*
-   README.md
-   logo.jpg
-   public/assets/images/*
+# Version control and CI
+.git
+.github
+.aws
+.gitignore
+
+# Env files
+.env
+.env*
+
+# Docker files
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Documentation and assets
+LICENSE*
+README.md
+logo.jpg
+docs/
+public/assets/images/*
 

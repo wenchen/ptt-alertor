@@ -1,8 +1,8 @@
 # building binary
-FROM golang:1.15-alpine as builder
+FROM golang:1.27.1-alpine AS builder
 
-ENV GOPATH /go/
-ENV GO_WORKDIR $GOPATH/src/github.com/Ptt-Alertor/ptt-alertor/
+ENV GOPATH=/go/
+ENV GO_WORKDIR=$GOPATH/src/github.com/wenchen/ptt-alertor/
 ENV GO111MODULE=on
 ENV CGO_ENABLED=0
 
@@ -17,11 +17,11 @@ RUN go install
 FROM alpine:latest
 
 RUN set -eux; \
-	apk add --no-cache --virtual ca-certificates
+	apk add --no-cache ca-certificates tzdata
 
 COPY public/ public/
 COPY --from=builder /go/bin/ptt-alertor .
 
-ENTRYPOINT /ptt-alertor
+ENTRYPOINT ["/ptt-alertor"]
 
 EXPOSE 9090 6060

@@ -5,7 +5,6 @@
             <li class="hidden-xs" role="presentation"><a href="/docs">DOCS</a></li>
             <li role="presentation"><a href="/top">TOP 100</a></li>
 
-            <li class="hidden-xs" role="presentation"><a href="/line">LINE</a></li>
             <li class="hidden-xs" role="presentation"><a href="/messenger">Messenger</a></li>
             <li class="hidden-xs" role="presentation"><a href="/telegram">Telegram</a></li>
 
@@ -14,7 +13,6 @@
                     Platform<span class="caret"></span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-right">
-                    <li><a href="/line">LINE</a></li>
                     <li><a href="/messenger">Messenger</a></li>
                     <li><a href="/telegram">Telegram</a></li>
                 </ul>

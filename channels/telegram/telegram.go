@@ -11,8 +11,8 @@ import (
 
 	"strconv"
 
-	"github.com/Ptt-Alertor/ptt-alertor/command"
-	"github.com/Ptt-Alertor/ptt-alertor/myutil"
+	"github.com/wenchen/ptt-alertor/command"
+	"github.com/wenchen/ptt-alertor/myutil"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/julienschmidt/httprouter"
 )
@@ -25,24 +25,36 @@ var (
 )
 
 func init() {
+	if token == "" {
+		log.Warn("Telegram token not configured; Telegram integration is disabled")
+		return
+	}
 	bot, err = tgbotapi.NewBotAPI(token)
 	if err != nil {
-		log.WithError(err).Fatal("Telegram Bot Initialize Failed")
+		log.WithError(err).Warn("Telegram Bot Initialize Failed")
+		return
 	}
 	// bot.Debug = true
 	log.Info("Telegram Authorized on " + bot.Self.UserName)
 
-	webhookConfig := tgbotapi.NewWebhook(host + "/telegram/" + token)
-	webhookConfig.MaxConnections = 100
-	_, err = bot.SetWebhook(webhookConfig)
-	if err != nil {
-		log.WithError(err).Fatal("Telegram Bot Set Webhook Failed")
+	if host != "" {
+		webhookConfig := tgbotapi.NewWebhook(host + "/telegram/" + token)
+		webhookConfig.MaxConnections = 100
+		_, err = bot.SetWebhook(webhookConfig)
+		if err != nil {
+			log.WithError(err).Warn("Telegram Bot Set Webhook Failed")
+		} else {
+			log.Info("Telegram Bot Sets Webhook Success")
+		}
 	}
-	log.Info("Telegram Bot Sets Webhook Success")
 }
 
 // HandleRequest handles request from webhook
 func HandleRequest(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	if bot == nil {
+		http.Error(w, "Telegram bot not configured", http.StatusServiceUnavailable)
+		return
+	}
 	bytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.WithError(err).Error("Telegram Read Request Body Failed")
@@ -131,6 +143,9 @@ func handleText(update tgbotapi.Update) {
 }
 
 func sendConfirmation(chatID int64, cmd string) {
+	if bot == nil {
+		return
+	}
 	markup := tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData("是", cmd),
@@ -154,6 +169,9 @@ func SendTextMessage(chatID int64, text string) {
 }
 
 func sendTextMessage(chatID int64, text string) {
+	if bot == nil {
+		return
+	}
 	msg := tgbotapi.NewMessage(chatID, text)
 	msg.DisableWebPagePreview = true
 	_, err := bot.Send(msg)
@@ -163,6 +181,9 @@ func sendTextMessage(chatID int64, text string) {
 }
 
 func showReplyKeyboard(chatID int64) {
+	if bot == nil {
+		return
+	}
 	keyboard := tgbotapi.NewReplyKeyboard(
 		tgbotapi.NewKeyboardButtonRow(
 			tgbotapi.NewKeyboardButton("清單"),
@@ -179,6 +200,9 @@ func showReplyKeyboard(chatID int64) {
 }
 
 func hideReplyKeyboard(chatID int64) {
+	if bot == nil {
+		return
+	}
 	msg := tgbotapi.NewMessage(chatID, "隱藏小鍵盤")
 	msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
 	_, err := bot.Send(msg)

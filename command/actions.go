@@ -4,13 +4,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Ptt-Alertor/ptt-alertor/models"
-	"github.com/Ptt-Alertor/ptt-alertor/models/author"
-	"github.com/Ptt-Alertor/ptt-alertor/models/keyword"
-	"github.com/Ptt-Alertor/ptt-alertor/models/pushsum"
-	"github.com/Ptt-Alertor/ptt-alertor/models/subscription"
-	"github.com/Ptt-Alertor/ptt-alertor/models/user"
-	"github.com/Ptt-Alertor/ptt-alertor/myutil"
+	"github.com/wenchen/ptt-alertor/models"
+	"github.com/wenchen/ptt-alertor/models/author"
+	"github.com/wenchen/ptt-alertor/models/keyword"
+	"github.com/wenchen/ptt-alertor/models/pushsum"
+	"github.com/wenchen/ptt-alertor/models/subscription"
+	"github.com/wenchen/ptt-alertor/models/user"
+	"github.com/wenchen/ptt-alertor/myutil"
 )
 
 type updateAction func(u *user.User, sub subscription.Subscription, inputs ...string) error
