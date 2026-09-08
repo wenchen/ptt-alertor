@@ -142,6 +142,7 @@ func main() {
 	if err := srv.Shutdown(ctx); err != nil {
 		log.WithError(err).Fatal("Web Server Showdown Failed")
 	}
+	telegram.StopConsumer()
 	log.Info("Web Server Was Been Shutdown")
 }
 

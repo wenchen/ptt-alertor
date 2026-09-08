@@ -2,26 +2,27 @@ package telegram
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"regexp"
+	"strconv"
+	"time"
 
 	log "github.com/Ptt-Alertor/logrus"
-
-	"strconv"
-
-	"github.com/wenchen/ptt-alertor/command"
-	"github.com/wenchen/ptt-alertor/myutil"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/julienschmidt/httprouter"
+	"github.com/wenchen/ptt-alertor/command"
+	"github.com/wenchen/ptt-alertor/myutil"
 )
 
 var (
-	bot   *tgbotapi.BotAPI
-	err   error
-	token = os.Getenv("TELEGRAM_TOKEN")
-	host  = os.Getenv("APP_HOST")
+	bot          *tgbotapi.BotAPI
+	err          error
+	token        = os.Getenv("TELEGRAM_TOKEN")
+	host         = os.Getenv("APP_HOST")
+	defaultQueue = NewMessageQueue(nil, nil)
 )
 
 func init() {
@@ -37,6 +38,8 @@ func init() {
 	// bot.Debug = true
 	log.Info("Telegram Authorized on " + bot.Self.UserName)
 
+	defaultQueue.Start()
+
 	if host != "" {
 		webhookConfig := tgbotapi.NewWebhook(host + "/telegram/" + token)
 		webhookConfig.MaxConnections = 100
@@ -47,6 +50,16 @@ func init() {
 			log.Info("Telegram Bot Sets Webhook Success")
 		}
 	}
+}
+
+// StartConsumer starts the telegram message queue consumer.
+func StartConsumer() {
+	defaultQueue.Start()
+}
+
+// StopConsumer gracefully stops the telegram message queue consumer.
+func StopConsumer() {
+	defaultQueue.Stop()
 }
 
 // HandleRequest handles request from webhook
@@ -153,16 +166,16 @@ func sendConfirmation(chatID int64, cmd string) {
 		))
 	msg := tgbotapi.NewMessage(chatID, "確定"+cmd+"？")
 	msg.ReplyMarkup = markup
-	_, err := bot.Send(msg)
-	if err != nil {
-		log.WithError(err).Error("Telegram Send Confirmation Failed")
-	}
+	_ = sendDirect(chatID, msg)
 }
 
 const maxCharacters = 4096
 
-// SendTextMessage sends text message to chatID
+// SendTextMessage sends text message to chatID via Redis queue.
 func SendTextMessage(chatID int64, text string) {
+	if bot == nil {
+		return
+	}
 	for _, msg := range myutil.SplitTextByLineBreak(text, maxCharacters) {
 		sendTextMessage(chatID, msg)
 	}
@@ -172,12 +185,58 @@ func sendTextMessage(chatID int64, text string) {
 	if bot == nil {
 		return
 	}
-	msg := tgbotapi.NewMessage(chatID, text)
-	msg.DisableWebPagePreview = true
-	_, err := bot.Send(msg)
-	if err != nil {
-		log.WithError(err).Error("Telegram Send Message Failed")
+	if err := defaultQueue.Enqueue(chatID, text); err != nil {
+		log.WithError(err).WithField("chatID", chatID).Warn("Telegram Redis Enqueue Failed, fallback to direct send")
+		msg := tgbotapi.NewMessage(chatID, text)
+		msg.DisableWebPagePreview = true
+		_ = sendDirect(chatID, msg)
 	}
+}
+
+func sendDirect(chatID int64, c tgbotapi.Chattable) error {
+	if bot == nil {
+		return nil
+	}
+	lock := getChatLock(chatID)
+	lock.Lock()
+	defer lock.Unlock()
+
+	limiter := getChatLimiter(chatID)
+
+	const maxRetries = 3
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		now := time.Now()
+		if now.Before(limiter.blockedUntil) {
+			sleepDur := limiter.blockedUntil.Sub(now)
+			time.Sleep(sleepDur)
+			now = time.Now()
+		}
+
+		if elapsed := now.Sub(limiter.lastSent); elapsed < time.Second {
+			time.Sleep(time.Second - elapsed)
+		}
+
+		_, err := bot.Send(c)
+		limiter.lastSent = time.Now()
+		if err == nil {
+			return nil
+		}
+
+		retryAfter := extractRetryAfter(err)
+		if retryAfter > 0 {
+			limiter.blockedUntil = time.Now().Add(retryAfter + 500*time.Millisecond)
+			log.WithFields(log.Fields{
+				"chatID":     chatID,
+				"retryAfter": retryAfter,
+				"attempt":    attempt + 1,
+			}).Warn("Telegram 429 on direct send, retrying after cooldown")
+			continue
+		}
+
+		log.WithError(err).WithField("chatID", chatID).Error("Telegram Send Message Failed")
+		return err
+	}
+	return fmt.Errorf("telegram send retries exhausted")
 }
 
 func showReplyKeyboard(chatID int64) {
@@ -193,10 +252,7 @@ func showReplyKeyboard(chatID int64) {
 		))
 	msg := tgbotapi.NewMessage(chatID, "顯示小鍵盤")
 	msg.ReplyMarkup = keyboard
-	_, err := bot.Send(msg)
-	if err != nil {
-		log.WithError(err).Error("Telegram Show Reply Keyboard Failed")
-	}
+	_ = sendDirect(chatID, msg)
 }
 
 func hideReplyKeyboard(chatID int64) {
@@ -205,8 +261,5 @@ func hideReplyKeyboard(chatID int64) {
 	}
 	msg := tgbotapi.NewMessage(chatID, "隱藏小鍵盤")
 	msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
-	_, err := bot.Send(msg)
-	if err != nil {
-		log.WithError(err).Error("Telegram Hide Reply Keyboard Failed")
-	}
+	_ = sendDirect(chatID, msg)
 }
