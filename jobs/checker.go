@@ -4,21 +4,84 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	log "github.com/Ptt-Alertor/logrus"
+	"github.com/garyburd/redigo/redis"
 
+	"github.com/wenchen/ptt-alertor/connections"
 	"github.com/wenchen/ptt-alertor/models"
 	"github.com/wenchen/ptt-alertor/models/article"
 	"github.com/wenchen/ptt-alertor/models/author"
 	"github.com/wenchen/ptt-alertor/models/board"
 	"github.com/wenchen/ptt-alertor/models/keyword"
 	"github.com/wenchen/ptt-alertor/models/user"
+	"github.com/wenchen/ptt-alertor/myutil"
 )
 
 const checkHighBoardDuration = 1 * time.Second
+const alertedKeyPrefix = "alerted:"
+const alertedTTL = 86400 // 24 hours
+
+var (
+	redisConnFunc = connections.Redis
+
+	checkingBoardsMu sync.Mutex
+	checkingBoards   = make(map[string]bool)
+)
+
+func tryLockBoard(name string) bool {
+	checkingBoardsMu.Lock()
+	defer checkingBoardsMu.Unlock()
+	key := strings.ToLower(name)
+	if checkingBoards[key] {
+		return false
+	}
+	checkingBoards[key] = true
+	return true
+}
+
+func unlockBoard(name string) {
+	checkingBoardsMu.Lock()
+	defer checkingBoardsMu.Unlock()
+	delete(checkingBoards, strings.ToLower(name))
+}
+
+func articleIdent(a article.Article) string {
+	if a.ID != 0 {
+		return strconv.Itoa(a.ID)
+	}
+	if a.Code != "" {
+		return a.Code
+	}
+	if a.Link != "" {
+		return a.Link
+	}
+	return a.Title
+}
+
+func isArticleAlerted(account, boardName string, a article.Article) bool {
+	ident := articleIdent(a)
+	if ident == "" || account == "" {
+		return false
+	}
+	key := fmt.Sprintf("%s%s:%s:%s", alertedKeyPrefix, account, strings.ToLower(boardName), ident)
+	conn := redisConnFunc()
+	defer conn.Close()
+
+	reply, err := redis.String(conn.Do("SET", key, "1", "EX", alertedTTL, "NX"))
+	if err == redis.ErrNil {
+		return true
+	}
+	if err != nil {
+		log.WithField("runtime", myutil.BasicRuntimeInfo()).WithError(err).Warn("Check article alerted error")
+		return false
+	}
+	return reply != "OK"
+}
 
 var boardCh = make(chan *board.Board, 700)
 var highBoards []*board.Board
@@ -186,7 +249,12 @@ func checkBoards(ctx context.Context, bds []*board.Board, duration time.Duration
 		case <-ctx.Done():
 			return
 		case <-time.After(duration):
-			go checkNewArticle(bd, boardCh)
+			if tryLockBoard(bd.Name) {
+				go func(b *board.Board) {
+					defer unlockBoard(b.Name)
+					checkNewArticle(b, boardCh)
+				}(bd)
+			}
 		}
 	}
 }
@@ -202,7 +270,8 @@ func checkNewArticle(bd *board.Board, boardCh chan *board.Board) {
 		bd.Articles = bd.OnlineArticles
 		log.WithField("board", bd.Name).Info("Updated Articles")
 		if err := bd.Save(); err == nil {
-			boardCh <- bd
+			bdCopy := *bd
+			boardCh <- &bdCopy
 		}
 	}
 }
@@ -221,7 +290,7 @@ func checkKeywordSubscriber(bd *board.Board, cker Checker) {
 
 func checkKeywordSubscription(user user.User, bd *board.Board, cker Checker) {
 	for _, sub := range user.Subscribes {
-		if bd.Name == sub.Board {
+		if strings.EqualFold(bd.Name, sub.Board) {
 			cker.board = sub.Board
 			for _, keyword := range sub.Keywords {
 				go checkKeyword(keyword, bd, cker)
@@ -234,8 +303,10 @@ func checkKeyword(keyword string, bd *board.Board, cker Checker) {
 	keywordArticles := make(article.Articles, 0)
 	for _, newAtcl := range bd.NewArticles {
 		if newAtcl.MatchKeyword(keyword) {
-			newAtcl.Author = ""
-			keywordArticles = append(keywordArticles, newAtcl)
+			if !isArticleAlerted(cker.Profile.Account, bd.Name, newAtcl) {
+				newAtcl.Author = ""
+				keywordArticles = append(keywordArticles, newAtcl)
+			}
 		}
 	}
 	if len(keywordArticles) != 0 {
@@ -261,7 +332,7 @@ func checkAuthorSubscriber(bd *board.Board, cker Checker) {
 
 func checkAuthorSubscription(user user.User, bd *board.Board, cker Checker) {
 	for _, sub := range user.Subscribes {
-		if bd.Name == sub.Board {
+		if strings.EqualFold(bd.Name, sub.Board) {
 			cker.board = sub.Board
 			for _, author := range sub.Authors {
 				go checkAuthor(author, bd, cker)
@@ -274,7 +345,9 @@ func checkAuthor(author string, bd *board.Board, cker Checker) {
 	authorArticles := make(article.Articles, 0)
 	for _, newAtcl := range bd.NewArticles {
 		if strings.EqualFold(newAtcl.Author, author) {
-			authorArticles = append(authorArticles, newAtcl)
+			if !isArticleAlerted(cker.Profile.Account, bd.Name, newAtcl) {
+				authorArticles = append(authorArticles, newAtcl)
+			}
 		}
 	}
 	if len(authorArticles) != 0 {
