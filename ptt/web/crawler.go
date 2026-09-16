@@ -302,7 +302,7 @@ func fetchHTML(reqURL string) (doc *html.Node, err error) {
 
 func passR18(reqURL string) (req *http.Request) {
 
-	req, _ = http.NewRequest("GET", reqURL, nil)
+	req, _ = pttHttp.HttpRequest(reqURL)
 
 	over18Cookie := http.Cookie{
 		Name:       "over18",
