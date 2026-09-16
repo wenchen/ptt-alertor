@@ -22,7 +22,7 @@ import (
 	"github.com/wenchen/ptt-alertor/myutil"
 )
 
-const checkHighBoardDuration = 1 * time.Second
+const checkHighBoardDuration = 3 * time.Second
 const alertedKeyPrefix = "alerted:"
 const alertedTTL = 86400 // 24 hours
 
@@ -119,7 +119,7 @@ type Checker struct {
 func NewChecker() *Checker {
 	ckerOnce.Do(func() {
 		cker = &Checker{
-			duration: 250 * time.Millisecond,
+			duration: 5 * time.Second,
 		}
 		cker.done = make(chan struct{})
 		cker.ch = make(chan Checker)
